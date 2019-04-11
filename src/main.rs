@@ -19,7 +19,7 @@ use stm32f7::stm32f7x6::{CorePeripherals, Peripherals};
 use alloc_cortex_m::CortexMHeap;
 use core::alloc::Layout as AllocLayout;
 use core::panic::PanicInfo;
-use core::ptr;
+//use core::ptr;
 use cortex_m_rt::{entry, exception};
 
 // Enables us to put stuff on the heap
@@ -42,31 +42,6 @@ fn SysTick() {
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     loop {}
-}
-
-struct Controller<A,B,C,D,E,F> where 
-    A: stm32f7_discovery::gpio::OutputPin,
-    B: stm32f7_discovery::gpio::InputPin,
-    C: stm32f7_discovery::gpio::OutputPin,
-    D: stm32f7_discovery::gpio::OutputPin,
-    E: stm32f7_discovery::gpio::InputPin,
-    F: stm32f7_discovery::gpio::InputPin,
-{
-    pub clock: Clock,
-    pub pins: stm32f7_discovery::init::pins::Pins<A,B,C,D,E,F>,
-}
-
-struct Clock {}
-impl Clock {
-    fn ticks(&self) -> usize {
-        system_clock::ticks()
-    }
-
-    fn wait(&self, seconds: usize, ticks: usize) { //TODO find a duration like type here
-        let curr_ticks = self.ticks();
-        //20 ticks = 1s
-        while self.ticks() - curr_ticks < seconds * 20 + ticks {}
-    }
 }
 
 #[entry]
@@ -118,13 +93,9 @@ fn init() -> ! {
     layer_2.clear();
     lcd::init_stdout(layer_2);
 
-
-    let mut controller = Controller {
-        clock: Clock{},
-        pins,
-    };
-
     usb_fs_config::init();
+
+    system_clock::wait_ms(2_000);
 
 
     println!("End of Program");
