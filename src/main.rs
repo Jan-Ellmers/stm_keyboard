@@ -93,6 +93,7 @@ fn init() -> ! {
     layer_2.clear();
     lcd::init_stdout(layer_2);
 
+    usb_fs_config::init_usb_mem_clock();
     usb_fs_config::init();
 
     system_clock::wait_ms(2_000);
