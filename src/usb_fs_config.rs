@@ -3,6 +3,8 @@ use stm32f7::stm32f7x6::{OTG_FS_GLOBAL, RCC, OTG_FS_PWRCLK, OTG_FS_DEVICE};
 
 use stm32f7_discovery::{system_clock, print, println};
 
+static buffer: [u32; 16] = [0; 16];
+
 pub fn init_usb_mem_clock() {
     let rcc;
     unsafe {rcc = RCC::ptr().as_ref().unwrap_or_else(|| {panic!("RCC returned a null pointer line {} usb_fs_config", line!())});}
@@ -206,12 +208,39 @@ pub fn init() -> UsbHandle {
         .otgint().set_bit()
     });
 
-    device.otg_fs_daintmsk.write(|bits| {bits
-        .iepm().set_bit()
-        .oepint().set_bit()
-    });
+    device.otg_fs_daintmsk.write(|bits| {unsafe {bits
+        .iepm().bits(1)
+        .oepint().bits(1)
+    }});
 
-    
+    device.otg_fs_daintmsk.write(|bits| {unsafe {bits
+        .iepm().bits(2)
+        .oepint().bits(2)
+    }});
+
+    device.otg_fs_diepctl1.modify(|_, bits| {unsafe {bits
+        .mpsiz().bits(16)
+        .eptyp().bits(3)
+        .txfnum().bits(1)
+        .sd0pid_sevnfrm().set_bit()
+        .usbaep().set_bit()
+    }});
+
+    device.otg_fs_doepctl1.modify(|_, bits| {unsafe {bits
+        .mpsiz().bits(16)
+        .eptyp().bits(3)
+        .sd0pid_sevnfrm().set_bit()
+        .usbaep().set_bit()
+    }});
+
+    device.otg_fs_dieptsiz1.modify(|_, bits| {unsafe {bits
+        .xfrsiz().bits(16)
+        .pktcnt().bits(1)
+    }});
+
+    device.otg_fs_diepctl1.modify(|_, bits| {bits
+        .snak().set_bit()
+    });
 
     
     UsbHandle {
